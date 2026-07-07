@@ -1,0 +1,28 @@
+name: Main Cache Save Seed
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  save-main-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Prepare trusted main cache payload
+        run: |
+          mkdir -p restore-target
+          cat > restore-target/main-marker.txt <<'EOF'
+          CACHE_MARKER=TRUSTED_MAIN_CACHE
+          source_ref=refs/heads/main
+          EOF
+          cat restore-target/main-marker.txt
+
+      - name: Save cache from main context
+        uses: actions/cache/save@v6
+        with:
+          path: restore-target
+          key: trusted-Linux-main-seed
