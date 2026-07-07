@@ -1,0 +1,46 @@
+name: Main Cache Restore Boundary
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  restore-main-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show clean baseline before restore
+        run: |
+          echo "Before restore:"
+          find restore-target -maxdepth 2 -type f -print -exec sed -n '1,40p' {} \; || true
+
+      - name: Restore cache on trusted main
+        id: cache
+        uses: actions/cache/restore@v6
+        with:
+          path: restore-target
+          key: trusted-Linux-main-never-exists
+          restore-keys: |
+            trusted-Linux-
+            trusted-
+
+      - name: Inspect restored content
+        run: |
+          echo "cache-hit=${{ steps.cache.outputs.cache-hit }}"
+          echo "cache-primary-key=${{ steps.cache.outputs.cache-primary-key }}"
+          echo "cache-matched-key=${{ steps.cache.outputs.cache-matched-key }}"
+          echo "After restore:"
+          find restore-target -maxdepth 2 -type f -print -exec sed -n '1,80p' {} \; || true
+
+      - name: Execute restored payload if present
+        run: |
+          if [ -x restore-target/payload.sh ]; then
+            ./restore-target/payload.sh
+          else
+            echo "No executable payload restored"
+          fi

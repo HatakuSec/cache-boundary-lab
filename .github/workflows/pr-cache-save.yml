@@ -1,0 +1,35 @@
+name: PR Cache Save Boundary
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  save-pr-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Prepare attacker-controlled cache payload
+        run: |
+          mkdir -p restore-target
+          cat > restore-target/payload.sh <<'EOF'
+          #!/usr/bin/env bash
+          echo "CACHE_PAYLOAD_EXECUTED"
+          echo "CACHE_MARKER=UNTRUSTED_PR_CACHE"
+          echo "source_ref=${GITHUB_REF}"
+          echo "source_event=${GITHUB_EVENT_NAME}"
+          EOF
+          chmod +x restore-target/payload.sh
+          echo "Prepared PR cache payload:"
+          cat restore-target/payload.sh
+
+      - name: Save cache from PR context
+        uses: actions/cache/save@v6
+        with:
+          path: restore-target
+          key: trusted-Linux-attacker-${{ github.run_id }}
