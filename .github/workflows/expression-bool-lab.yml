@@ -1,0 +1,31 @@
+name: Expression Bool Lab
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      PUBLISH_RELEASES:
+        description: Whether to publish releases
+        type: boolean
+        default: false
+        required: true
+
+jobs:
+  bool-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show expression results
+        run: |
+          echo 'event=${{ github.event_name }}'
+          echo 'inputs.PUBLISH_RELEASES=${{ inputs.PUBLISH_RELEASES }}'
+          echo 'inputs.PUBLISH_RELEASES || false = ${{ inputs.PUBLISH_RELEASES || false }}'
+          echo 'toJSON(inputs)=${{ toJSON(inputs) }}'
+
+      - name: Would publish if direct input
+        if: inputs.PUBLISH_RELEASES
+        run: echo "DIRECT_INPUT_TRUE"
+
+      - name: Would publish if OR false
+        if: inputs.PUBLISH_RELEASES || false
+        run: echo "OR_FALSE_TRUE"
