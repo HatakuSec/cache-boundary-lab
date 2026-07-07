@@ -1,0 +1,29 @@
+name: PR Cache Restore Boundary
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  restore-pr-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Restore main cache from PR context
+        id: cache
+        uses: actions/cache/restore@v6
+        with:
+          path: restore-target
+          key: trusted-Linux-main-seed
+
+      - name: Inspect PR restore result
+        run: |
+          echo "cache-hit=${{ steps.cache.outputs.cache-hit }}"
+          echo "cache-primary-key=${{ steps.cache.outputs.cache-primary-key }}"
+          echo "cache-matched-key=${{ steps.cache.outputs.cache-matched-key }}"
+          find restore-target -maxdepth 2 -type f -print -exec sed -n '1,80p' {} \; || true
