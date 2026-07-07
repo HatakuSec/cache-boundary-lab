@@ -1,0 +1,35 @@
+name: Branch Push Cache Save Boundary
+
+on:
+  push:
+    branches-ignore:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  save-branch-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Prepare branch cache payload
+        run: |
+          mkdir -p restore-target
+          cat > restore-target/payload.sh <<'EOF'
+          #!/usr/bin/env bash
+          echo "CACHE_PAYLOAD_EXECUTED"
+          echo "CACHE_MARKER=UNTRUSTED_BRANCH_PUSH_CACHE"
+          echo "source_ref=${GITHUB_REF}"
+          echo "source_event=${GITHUB_EVENT_NAME}"
+          EOF
+          chmod +x restore-target/payload.sh
+          cat restore-target/payload.sh
+
+      - name: Save cache from branch push context
+        uses: actions/cache/save@v6
+        with:
+          path: restore-target
+          key: trusted-Linux-branch-${{ github.run_id }}
